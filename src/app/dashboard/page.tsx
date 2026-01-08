@@ -3,6 +3,8 @@ import { listMaps } from "@/lib/actions/map";
 import { CreateMapButton } from "./CreateMapButton";
 import { MapCard } from "@/components/dashboard/MapCard";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
     const mapsResult = await listMaps();
     const maps = mapsResult.success ? mapsResult.data : [];
