@@ -1,0 +1,256 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// MULTI-TENANT ORGANIZATION MODEL
+// =============================================================================
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  tenantId  String   @unique // Azure AD Tenant ID for SSO linking
+  
+  // Relations
+  users     User[]
+  mindMaps  MindMap[]
+  teams     Team[]
+  
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("organizations")
+}
+
+// =============================================================================
+// USER MODEL - Supports both Entra ID and Email/Password
+// =============================================================================
+model User {
+  id             String   @id @default(cuid())
+  name           String?
+  email          String   @unique
+  emailVerified  DateTime?
+  image          String?
+  
+  // Password for email/password auth (null for SSO users)
+  password       String?
+  
+  // Microsoft Entra ID linking (optional for email/password users)
+  entraObjectId  String?  @unique // Azure AD Object ID - unique per user
+  
+  // Multi-tenancy
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  lockedMaps     MindMap[] @relation("LockedByUser")
+  aiUsageLogs    AIUsageLog[]
+  accounts       Account[]
+  sessions       Session[]
+  
+  // Audit
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Indexes for performance
+  @@index([organizationId])
+  @@index([entraObjectId])
+  @@index([email])
+  
+  @@map("users")
+}
+
+// =============================================================================
+// MIND MAP MODEL - Core Entity with Pessimistic Locking
+// =============================================================================
+model MindMap {
+  id             String    @id @default(uuid())
+  title          String
+  
+  // Ownership - creator of the map (optional for backward compatibility)
+  ownerId        String?
+  
+  // Multi-tenancy - CRITICAL for data isolation
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Content stored as JSONB
+  // Structure: { "schemaVersion": 1, "nodes": [...], "edges": [...] }
+  content        Json      @default("{\"schemaVersion\": 1, \"nodes\": [], \"edges\": []}")
+  
+  // Optimistic Concurrency Control
+  version        Int       @default(1)
+  
+  // Pessimistic Locking Fields
+  isLocked       Boolean   @default(false)
+  lockedByUserId String?
+  lockedByUser   User?     @relation("LockedByUser", fields: [lockedByUserId], references: [id], onDelete: SetNull)
+  lockHeartbeat  DateTime? // Last heartbeat timestamp for stale lock detection
+  
+  // Sharing
+  shares         MapShare[]
+  
+  // Audit
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  // Indexes for performance
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([lockedByUserId])
+  @@index([isLocked, lockHeartbeat]) // For stale lock queries
+  
+  @@map("mind_maps")
+}
+
+// =============================================================================
+// TEAM MODEL - Groups of users for collaboration
+// =============================================================================
+model Team {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  
+  // Organization scope
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Owner (creator)
+  ownerId        String
+  
+  // Relations
+  members        TeamMember[]
+  sharedMaps     MapShare[]
+  
+  // Audit
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@index([organizationId])
+  @@index([ownerId])
+  @@map("teams")
+}
+
+// =============================================================================
+// TEAM MEMBER - User membership in teams with roles
+// =============================================================================
+model TeamMember {
+  id        String   @id @default(cuid())
+  
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  
+  role      String   @default("member") // "owner", "admin", "member"
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+// =============================================================================
+// MAP SHARE - Granular sharing permissions for maps
+// =============================================================================
+model MapShare {
+  id          String   @id @default(cuid())
+  
+  mapId       String
+  map         MindMap  @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  
+  // Share target (either team OR user, not both)
+  teamId      String?
+  team        Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId      String?  // For individual user sharing
+  
+  // Permission level: "view" or "edit"
+  permission  String   @default("view")
+  
+  // Who shared it
+  sharedById  String
+  sharedAt    DateTime @default(now())
+  
+  @@unique([mapId, teamId])
+  @@unique([mapId, userId])
+  @@index([mapId])
+  @@index([teamId])
+  @@index([userId])
+  @@map("map_shares")
+}
+
+// =============================================================================
+// AI USAGE LOG - For Rate Limiting
+// =============================================================================
+model AIUsageLog {
+  id         String   @id @default(cuid())
+  
+  // User tracking
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Usage metrics
+  tokensUsed Int
+  model      String?  // Which AI model was used
+  action     String?  // e.g., "generateIdeas", "summarize"
+  
+  // Timestamp for rate limiting calculations
+  timestamp  DateTime @default(now())
+  
+  // Index for efficient rate limit queries (user + time window)
+  @@index([userId, timestamp])
+  
+  @@map("ai_usage_logs")
+}
+
+// =============================================================================
+// NEXTAUTH ADAPTER MODELS (Required for NextAuth v5 with Prisma)
+// =============================================================================
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
