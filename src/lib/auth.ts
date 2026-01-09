@@ -136,7 +136,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                     token.id = dbUser.id;
                     token.entraObjectId = dbUser.entraObjectId || undefined;
-                    token.organizationId = dbUser.organizationId;
+                    token.organizationId = dbUser.organizationId || undefined;
                 }
             }
 
