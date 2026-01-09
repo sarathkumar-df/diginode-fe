@@ -505,7 +505,7 @@ function MindMapCanvasInner({
     // ==========================================================================
     // AI HANDLERS
     // ==========================================================================
-    const handleAIPromptSubmit = useCallback(async (prompt: string) => {
+    const handleAIPromptSubmit = useCallback(async (prompt: string, persona: string = "general") => {
         if (!selectedNodeId) return;
 
         const selectedNode = nodes.find(n => n.id === selectedNodeId);
@@ -521,6 +521,7 @@ function MindMapCanvasInner({
                 nodeText: selectedNode.data.label as string,
                 userPrompt: prompt,
                 context: (selectedNode.data.description as string) || undefined,
+                persona: persona as "general" | "digital_media" | "ui_ux" | "development" | "testing" | "product_management" | "marketing" | "data_analytics",
             });
 
             if (result.success) {

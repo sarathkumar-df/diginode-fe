@@ -57,13 +57,28 @@ export async function generateSuggestions(
             throw new RateLimitError(RATE_LIMIT_MAX_REQUESTS, rateLimit.resetTime);
         }
 
-        // Build the prompt
-        const systemPrompt = `You are a creative mind-mapping assistant. Your job is to provide specific suggestions based on a user's prompt and a selected node.
+        // Build the prompt based on persona
+        const personaPrompts: Record<string, string> = {
+            general: "You are a creative mind-mapping assistant helping with general brainstorming and idea organization.",
+            digital_media: "You are a digital media expert specializing in content strategy, social media, video production, and digital campaigns. Focus on engaging content, audience growth, and multimedia storytelling.",
+            ui_ux: "You are a UI/UX design expert. Focus on user experience, interface design, user research, usability, wireframing, prototyping, and design systems. Think about user journeys and accessibility.",
+            development: "You are a software development expert. Focus on technical architecture, coding practices, APIs, databases, performance optimization, and modern tech stacks. Be specific about implementation details.",
+            testing: "You are a QA and testing expert. Focus on test strategies, test cases, automation, edge cases, quality metrics, and bug prevention. Think about both manual and automated testing approaches.",
+            product_management: "You are a product management expert. Focus on roadmaps, user stories, prioritization, stakeholder management, market analysis, and product metrics. Think strategically about product direction.",
+            marketing: "You are a marketing expert. Focus on brand strategy, customer acquisition, campaigns, market positioning, and growth tactics. Think about messaging and audience segmentation.",
+            data_analytics: "You are a data analytics expert. Focus on data insights, metrics, KPIs, data visualization, statistical analysis, and data-driven decision making. Be specific about measurable outcomes."
+        };
+
+        const personaDescription = personaPrompts[validated.persona || "general"] || personaPrompts.general;
+
+        const systemPrompt = `${personaDescription}
+
+Your job is to provide specific suggestions based on a user's prompt and a selected node in a mind map.
         
 Rules:
 1. Listen to the user's specific request in the "prompt".
 2. Consider the "nodeText" as the anchor or subject.
-3. Generate 3-5 relevant suggestions.
+3. Generate 3-5 relevant suggestions tailored to your expertise.
 4. Each suggestion must have a concise label (1-5 words).
 5. Provide a brief description and optionally reasoning.
 6. Categorize each as "topic" (main concept), "idea" (related thought), or "note" (supporting detail).

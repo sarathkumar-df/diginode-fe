@@ -171,6 +171,16 @@ export const GenerateSuggestionsInputSchema = z.object({
         .min(1, "Prompt is required")
         .max(1000, "Prompt must be 1000 characters or less"),
     context: z.string().max(5000).optional(),
+    persona: z.enum([
+        "general",
+        "digital_media",
+        "ui_ux",
+        "development",
+        "testing",
+        "product_management",
+        "marketing",
+        "data_analytics"
+    ]).optional().default("general"),
 });
 
 export type GenerateSuggestionsInput = z.infer<typeof GenerateSuggestionsInputSchema>;
