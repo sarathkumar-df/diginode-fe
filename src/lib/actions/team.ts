@@ -7,7 +7,7 @@
  */
 
 import { db } from "@/lib/db";
-import { getCurrentUserId, getCurrentUserOrgId } from "@/lib/auth";
+import { getCurrentUserId, getCurrentOrganizationId } from "@/lib/auth";
 import {
     ActionResult,
     successResult,
@@ -58,7 +58,7 @@ export async function createTeam(
 ): Promise<ActionResult<Team>> {
     try {
         const userId = await getCurrentUserId();
-        const orgId = await getCurrentUserOrgId();
+        const orgId = await getCurrentOrganizationId();
 
         // Create team and add owner as member in a transaction
         const team = await db.$transaction(async (tx) => {
@@ -103,7 +103,7 @@ export async function createTeam(
 export async function listTeams(): Promise<ActionResult<Team[]>> {
     try {
         const userId = await getCurrentUserId();
-        const orgId = await getCurrentUserOrgId();
+        const orgId = await getCurrentOrganizationId();
 
         // Get all teams in the org where user is a member
         const teams = await db.team.findMany({
@@ -149,7 +149,7 @@ export async function getTeam(
 ): Promise<ActionResult<TeamWithMembers>> {
     try {
         const userId = await getCurrentUserId();
-        const orgId = await getCurrentUserOrgId();
+        const orgId = await getCurrentOrganizationId();
 
         const team = await db.team.findFirst({
             where: {
@@ -232,7 +232,7 @@ export async function addTeamMember(
 ): Promise<ActionResult<TeamMemberInfo>> {
     try {
         const userId = await getCurrentUserId();
-        const orgId = await getCurrentUserOrgId();
+        const orgId = await getCurrentOrganizationId();
 
         // Verify team exists and user has permission
         const team = await db.team.findFirst({
@@ -302,7 +302,7 @@ export async function removeTeamMember(
 ): Promise<ActionResult<{ success: true }>> {
     try {
         const userId = await getCurrentUserId();
-        const orgId = await getCurrentUserOrgId();
+        const orgId = await getCurrentOrganizationId();
 
         // Verify team exists
         const team = await db.team.findFirst({
@@ -359,7 +359,7 @@ export async function removeTeamMember(
 
 export async function listOrganizationUsers(): Promise<ActionResult<OrganizationUser[]>> {
     try {
-        const orgId = await getCurrentUserOrgId();
+        const orgId = await getCurrentOrganizationId();
 
         const users = await db.user.findMany({
             where: {
@@ -390,7 +390,7 @@ export async function deleteTeam(
 ): Promise<ActionResult<{ success: true }>> {
     try {
         const userId = await getCurrentUserId();
-        const orgId = await getCurrentUserOrgId();
+        const orgId = await getCurrentOrganizationId();
 
         const team = await db.team.findFirst({
             where: {
