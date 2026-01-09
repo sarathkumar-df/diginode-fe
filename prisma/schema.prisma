@@ -95,6 +95,9 @@ model MindMap {
   lockedByUser   User?     @relation("LockedByUser", fields: [lockedByUserId], references: [id], onDelete: SetNull)
   lockHeartbeat  DateTime? // Last heartbeat timestamp for stale lock detection
   
+  // Public shareable link
+  publicLinkToken String?  @unique
+  
   // Sharing
   shares         MapShare[]
   
@@ -186,6 +189,35 @@ model MapShare {
   @@index([teamId])
   @@index([userId])
   @@map("map_shares")
+}
+
+// =============================================================================
+// NOTIFICATION MODEL - User notifications
+// =============================================================================
+model Notification {
+  id        String   @id @default(cuid())
+  
+  // Target user
+  userId    String
+  
+  // Notification content
+  type      String   // "team_invite", "map_shared", "mention", etc.
+  title     String
+  message   String
+  
+  // Reference to related entity
+  referenceId   String?  // ID of team, map, etc.
+  referenceType String?  // "team", "map", etc.
+  
+  // Status
+  isRead    Boolean  @default(false)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
 
 // =============================================================================

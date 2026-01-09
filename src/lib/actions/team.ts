@@ -15,6 +15,7 @@ import {
     NotFoundError,
     ForbiddenError,
 } from "@/lib/errors";
+import { createNotification } from "@/lib/actions/notification";
 
 // =============================================================================
 // TYPES
@@ -270,6 +271,12 @@ export async function addTeamMember(
             throw new NotFoundError("User not found in your organization");
         }
 
+        // Get the name of the person adding the member
+        const currentUser = await db.user.findUnique({
+            where: { id: userId },
+            select: { name: true, email: true },
+        });
+
         // Add member
         const newMember = await db.teamMember.create({
             data: {
@@ -277,6 +284,17 @@ export async function addTeamMember(
                 userId: userIdToAdd,
                 role: "member",
             },
+        });
+
+        // Create notification for the added user
+        const addedByName = currentUser?.name || currentUser?.email || "Someone";
+        await createNotification({
+            userId: userIdToAdd,
+            type: "team_invite",
+            title: `Added to ${team.name}`,
+            message: `${addedByName} added you to the team "${team.name}"`,
+            referenceId: teamId,
+            referenceType: "team",
         });
 
         return successResult({
@@ -354,16 +372,18 @@ export async function removeTeamMember(
 }
 
 // =============================================================================
-// LIST ORGANIZATION USERS (for member picker)
+// LIST ORGANIZATION USERS (for member picker, excludes current user)
 // =============================================================================
 
 export async function listOrganizationUsers(): Promise<ActionResult<OrganizationUser[]>> {
     try {
+        const userId = await getCurrentUserId();
         const orgId = await getCurrentOrganizationId();
 
         const users = await db.user.findMany({
             where: {
                 organizationId: orgId,
+                id: { not: userId }, // Exclude current user
             },
             select: {
                 id: true,

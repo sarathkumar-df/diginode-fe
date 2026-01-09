@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Lock, LockOpen, Clock, MoreHorizontal, Share2, Trash2, Edit, Brain } from "lucide-react";
 import { deleteMap } from "@/lib/actions/map";
+import { ShareDialog } from "@/components/dashboard/ShareDialog";
 import { toast } from "sonner";
 
 interface MapCardProps {
@@ -47,6 +48,7 @@ interface MapCardProps {
 export function MapCard({ id, title, updatedAt, isLocked, lockedByUserName }: MapCardProps) {
     const router = useRouter();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showShareDialog, setShowShareDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = async () => {
@@ -68,13 +70,12 @@ export function MapCard({ id, title, updatedAt, isLocked, lockedByUserName }: Ma
     };
 
     const handleShare = () => {
-        // TODO: Open share dialog
-        toast.info("Share feature coming soon!");
+        setShowShareDialog(true);
     };
 
     return (
         <>
-            <Card className="hover:border-blue-200 hover:shadow-md transition-all h-full bg-white border-slate-200 group relative">
+            <Card className="hover:border-blue-200 hover:shadow-md transition-all h-full bg-white border-slate-200 group relative overflow-hidden">
                 {/* Actions Menu */}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                     <DropdownMenu>
@@ -119,16 +120,16 @@ export function MapCard({ id, title, updatedAt, isLocked, lockedByUserName }: Ma
                             <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center border border-blue-100 shrink-0">
                                 <Brain className="h-5 w-5 text-blue-500" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <CardTitle className="text-lg text-slate-900 truncate">{title}</CardTitle>
-                                <div className="mt-1">
+                            <div className="flex-1 min-w-0 overflow-hidden">
+                                <CardTitle className="text-base text-slate-900 truncate" title={title}>{title}</CardTitle>
+                                <div className="mt-1.5">
                                     {isLocked ? (
-                                        <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200">
+                                        <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
                                             <Lock className="h-3 w-3 mr-1" />
                                             {lockedByUserName || "Locked"}
                                         </Badge>
                                     ) : (
-                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
                                             <LockOpen className="h-3 w-3 mr-1" />
                                             Available
                                         </Badge>
@@ -168,6 +169,14 @@ export function MapCard({ id, title, updatedAt, isLocked, lockedByUserName }: Ma
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Share Dialog */}
+            <ShareDialog
+                open={showShareDialog}
+                onOpenChange={setShowShareDialog}
+                mapId={id}
+                mapTitle={title}
+            />
         </>
     );
 }
