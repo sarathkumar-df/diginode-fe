@@ -21,7 +21,11 @@ import { Label } from "@/components/ui/label";
 import { Plus, Loader2 } from "lucide-react";
 import { createMap } from "@/lib/actions/map";
 
-export function CreateMapButton() {
+interface CreateMapButtonProps {
+    size?: "default" | "sm" | "lg";
+}
+
+export function CreateMapButton({ size = "default" }: CreateMapButtonProps) {
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [title, setTitle] = useState("");
@@ -57,7 +61,7 @@ export function CreateMapButton() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>
+                <Button size={size}>
                     <Plus className="mr-2 h-4 w-4" />
                     New Mind Map
                 </Button>

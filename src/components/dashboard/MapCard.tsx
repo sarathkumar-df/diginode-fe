@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * MapCard Component
+ * MapCard Component - Light Theme
  * 
  * Displays a mind map card with actions:
  * - Open (navigate to editor)
@@ -32,7 +32,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Lock, LockOpen, Clock, MoreHorizontal, Share2, Trash2, Edit } from "lucide-react";
+import { Lock, LockOpen, Clock, MoreHorizontal, Share2, Trash2, Edit, Brain } from "lucide-react";
 import { deleteMap } from "@/lib/actions/map";
 import { toast } from "sonner";
 
@@ -74,7 +74,7 @@ export function MapCard({ id, title, updatedAt, isLocked, lockedByUserName }: Ma
 
     return (
         <>
-            <Card className="hover:border-blue-300 hover:shadow-md transition-all h-full bg-white group relative">
+            <Card className="hover:border-blue-200 hover:shadow-md transition-all h-full bg-white border-slate-200 group relative">
                 {/* Actions Menu */}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                     <DropdownMenu>
@@ -82,7 +82,7 @@ export function MapCard({ id, title, updatedAt, isLocked, lockedByUserName }: Ma
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 bg-white/80 hover:bg-white shadow-sm"
+                                className="h-8 w-8 bg-white/90 hover:bg-slate-100 text-slate-500 shadow-sm border border-slate-200"
                                 onClick={(e) => e.preventDefault()}
                             >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -114,23 +114,31 @@ export function MapCard({ id, title, updatedAt, isLocked, lockedByUserName }: Ma
                 {/* Card Content - Clickable to open */}
                 <Link href={`/editor/${id}`} className="block">
                     <CardHeader className="pr-12">
-                        <div className="flex items-start justify-between">
-                            <CardTitle className="text-lg">{title}</CardTitle>
-                            {isLocked ? (
-                                <Badge variant="secondary" className="shrink-0">
-                                    <Lock className="h-3 w-3 mr-1" />
-                                    {lockedByUserName || "Locked"}
-                                </Badge>
-                            ) : (
-                                <Badge variant="outline" className="shrink-0">
-                                    <LockOpen className="h-3 w-3 mr-1" />
-                                    Available
-                                </Badge>
-                            )}
+                        <div className="flex items-start gap-3">
+                            {/* Icon */}
+                            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center border border-blue-100 shrink-0">
+                                <Brain className="h-5 w-5 text-blue-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <CardTitle className="text-lg text-slate-900 truncate">{title}</CardTitle>
+                                <div className="mt-1">
+                                    {isLocked ? (
+                                        <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200">
+                                            <Lock className="h-3 w-3 mr-1" />
+                                            {lockedByUserName || "Locked"}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                            <LockOpen className="h-3 w-3 mr-1" />
+                                            Available
+                                        </Badge>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardFooter>
-                        <div className="flex items-center text-sm text-muted-foreground">
+                        <div className="flex items-center text-sm text-slate-400">
                             <Clock className="h-3 w-3 mr-1" />
                             Updated {formatRelativeTime(updatedAt)}
                         </div>
@@ -142,7 +150,7 @@ export function MapCard({ id, title, updatedAt, isLocked, lockedByUserName }: Ma
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete "{title}"?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete &quot;{title}&quot;?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete the mind map
                             and all its contents.
