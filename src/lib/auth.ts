@@ -57,7 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     name: user.name,
                     image: user.image,
                     entraObjectId: user.entraObjectId || undefined,
-                    organizationId: user.organizationId,
+                    organizationId: user.organizationId || undefined,
                 };
             },
         }),
