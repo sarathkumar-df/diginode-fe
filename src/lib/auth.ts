@@ -72,6 +72,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     authorization: {
                         params: {
                             scope: "openid profile email User.Read",
+                            prompt: "select_account",
                         },
                     },
                 }),
@@ -122,6 +123,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                             name: user.name,
                             image: user.image,
                             entraObjectId,
+                            organizationId: organization.id,
                         },
                         create: {
                             email: user.email!,
